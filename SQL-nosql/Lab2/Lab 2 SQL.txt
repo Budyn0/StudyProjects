@@ -1,0 +1,433 @@
+-- zad 1
+
+
+
+CREATE OR REPLACE PROCEDURE NowyPracownik (vNazwisko IN VARCHAR, vNazwaZespolu IN VARCHAR, vNazwiskoSzefa IN VARCHAR, vPlacaPod IN NUMBER) IS
+
+BEGIN
+
+    INSERT INTO pracownicy (ID_PRAC, NAZWISKO, ETAT, ID_SZEFA, ZATRUDNIONY, PLACA_POD, ID_ZESP) 
+
+    VALUES ((SELECT MAX(ID_PRAC) + 1 FROM pracownicy), vNazwisko, 'STAZYSTA', (SELECT ID_PRAC FROM pracownicy WHERE NAZWISKO = vNazwiskoSzefa), CURRENT_DATE, vPlacaPod, (SELECT ID_ZESP FROM zespoly WHERE NAZWA = vNazwaZespolu));
+
+END NowyPracownik;
+
+
+
+--EXEC NowyPracownik('CWIERTNIA', 'ADMINISTRACJA', 'WEGLARZ', 555);
+
+
+
+-- zad 2
+
+
+
+CREATE OR REPLACE FUNCTION PlacaNetto (vPlacaBrutto IN NUMBER, vTax IN NUMBER DEFAULT 20) RETURN NUMBER IS
+
+BEGIN
+
+    RETURN vPlacaBrutto/((100+vTax)/100);
+
+END PlacaNetto;
+
+
+
+--SELECT nazwisko, placa_pod AS BRUTTO, PlacaNetto(placa_pod, 35) AS NETTO FROM Pracownicy WHERE etat = 'PROFESOR' ORDER BY nazwisko;
+
+
+
+-- zad 3
+
+
+
+CREATE OR REPLACE FUNCTION Silnia (vLiczba IN NUMBER) RETURN NUMBER IS
+
+    vTmp NUMBER := 1;
+
+    vLicznik NUMBER := 1;
+
+BEGIN
+
+    WHILE vLicznik < vLiczba LOOP
+
+    vLicznik := vLicznik + 1;
+
+    vTmp := vTmp * vLicznik;
+
+    END LOOP;
+
+    
+
+    RETURN vTmp;
+
+END Silnia;
+
+
+
+--SELECT Silnia(5) FROM Dual;
+
+
+
+-- zad 4
+
+
+
+CREATE OR REPLACE FUNCTION SilniaRek (vLiczba IN NUMBER) RETURN NUMBER IS
+
+    vTmp NUMBER := 1;
+
+BEGIN
+
+    IF vLiczba = 2 THEN 
+
+        RETURN 2;
+
+    ELSE
+
+        RETURN vLiczba * SilniaRek(vLiczba - 1);
+
+    END IF;
+
+END SilniaRek;
+
+
+
+--SELECT SilniaRek(5) FROM Dual;
+
+
+
+-- zad 5
+
+
+
+CREATE OR REPLACE FUNCTION IleLat (vData IN DATE) RETURN NUMBER IS
+
+BEGIN
+
+    RETURN ABS(EXTRACT(YEAR FROM vData) - EXTRACT(YEAR FROM CURRENT_DATE));
+
+END IleLat;
+
+
+
+--SELECT nazwisko, zatrudniony, IleLat(zatrudniony) AS staz
+
+--FROM Pracownicy WHERE placa_pod > 1000
+
+--ORDER BY nazwisko;
+
+
+
+-- zad 6
+
+
+
+CREATE OR REPLACE PACKAGE Konwersja IS
+
+    FUNCTION Cels_To_Fahr (vLiczba IN NUMBER) RETURN NUMBER;
+
+    
+
+    FUNCTION Fahr_To_Cels (vLiczba IN NUMBER) RETURN NUMBER;
+
+END Konwersja;
+
+
+
+CREATE OR REPLACE PACKAGE BODY Konwersja IS
+
+    FUNCTION Cels_To_Fahr (vLiczba IN NUMBER) RETURN NUMBER IS
+
+    BEGIN
+
+        RETURN 9/5*vLiczba+32;
+
+    END Cels_To_Fahr;
+
+    
+
+    FUNCTION Fahr_To_Cels (vLiczba IN NUMBER) RETURN NUMBER IS
+
+    BEGIN
+
+        RETURN 5/9*(vLiczba-32);
+
+    END Fahr_To_Cels;
+
+END Konwersja;
+
+    
+
+--SELECT Konwersja.Fahr_To_Cels(212) AS CELSJUSZ FROM Dual;
+
+--SELECT Konwersja.Cels_To_Fahr(0) AS FAHRENHEIT FROM Dual;
+
+
+
+-- zad 7
+
+
+
+CREATE OR REPLACE PACKAGE Zmienne IS
+
+    vLicznik NUMBER := 0;
+
+
+
+    PROCEDURE ZwiekszLicznik;
+
+    
+
+    PROCEDURE ZmniejszLicznik;
+
+    
+
+    FUNCTION PokazLicznik RETURN NUMBER;
+
+END Zmienne;
+
+
+
+CREATE OR REPLACE PACKAGE BODY Zmienne IS
+
+    PROCEDURE ZwiekszLicznik IS
+
+    BEGIN
+
+        vLicznik := vLicznik + 1;
+
+        DBMS_OUTPUT.PUT_LINE(vLicznik);
+
+    END ZwiekszLicznik;
+
+    
+
+    PROCEDURE ZmniejszLicznik IS
+
+    BEGIN
+
+        vLicznik := vLicznik - 1;
+
+        DBMS_OUTPUT.PUT_LINE(vLicznik);
+
+    END ZmniejszLicznik;
+
+    
+
+    FUNCTION PokazLicznik RETURN NUMBER IS
+
+    BEGIN
+
+        RETURN vLicznik;
+
+    END PokazLicznik;
+
+    
+
+BEGIN
+
+    vLicznik := 1;
+
+    DBMS_OUTPUT.PUT_LINE(Zmienne.PokazLicznik);
+
+END Zmienne;
+
+
+
+--set serveroutput on
+
+--BEGIN
+
+--    dbms_output.put_line(Zmienne.PokazLicznik);
+
+--END;
+
+--BEGIN
+
+--    Zmienne.ZwiekszLicznik;
+
+--    DBMS_OUTPUT.PUT_LINE(Zmienne.PokazLicznik);
+
+--    Zmienne.ZwiekszLicznik;
+
+--    DBMS_OUTPUT.PUT_LINE (Zmienne.PokazLicznik);
+
+--END;
+
+--BEGIN
+
+--     DBMS_OUTPUT.PUT_LINE (Zmienne.PokazLicznik);
+
+--     Zmienne.ZmniejszLicznik;
+
+--     DBMS_OUTPUT.PUT_LINE (Zmienne.PokazLicznik);
+
+--END;
+
+
+
+-- zad 8
+
+
+
+CREATE OR REPLACE PACKAGE IntZespoly IS
+
+    PROCEDURE DodajZespol (vNazwa IN VARCHAR, vAdres IN VARCHAR);
+
+    
+
+    PROCEDURE UsunZespol (vId IN NUMBER);
+
+    
+
+    PROCEDURE UsunZespolPoNazwie (vNazwa IN VARCHAR);
+
+    
+
+    PROCEDURE ZmienZespol (vId IN NUMBER, vNazwa IN VARCHAR, vAdres IN VARCHAR);
+
+    
+
+    FUNCTION PobierzIdPoNazwie (vNazwa IN VARCHAR) RETURN NUMBER;
+
+    
+
+    FUNCTION PobierzNazwePoId (vId IN NUMBER) RETURN VARCHAR;
+
+    
+
+    FUNCTION PobierzAdresPoId (vId IN NUMBER) RETURN VARCHAR;
+
+END IntZespoly;
+
+
+
+CREATE OR REPLACE PACKAGE BODY IntZespoly IS
+
+    PROCEDURE DodajZespol (vNazwa IN VARCHAR, vAdres IN VARCHAR) IS
+
+    BEGIN
+
+        INSERT INTO zespoly (ID_ZESP, NAZWA, ADRES) VALUES ((SELECT MAX(ID_ZESP) + 1 FROM zespoly), vNazwa, vAdres);
+
+    END DodajZespol;
+
+    
+
+    PROCEDURE UsunZespol (vId IN NUMBER) IS
+
+    BEGIN
+
+        DELETE FROM zespoly WHERE ID_ZESP = vId;
+
+    END UsunZespol;
+
+    
+
+    PROCEDURE UsunZespolPoNazwie (vNazwa IN VARCHAR) IS
+
+    BEGIN
+
+        DELETE FROM zespoly WHERE NAZWA = vNazwa;
+
+    END UsunZespolPoNazwie;
+
+    
+
+    PROCEDURE ZmienZespol (vId IN NUMBER, vNazwa IN VARCHAR, vAdres IN VARCHAR) IS
+
+    BEGIN
+
+        UPDATE zespoly SET NAZWA = vNazwa, ADRES = vAdres WHERE ID_ZESP = vId;
+
+    END ZmienZespol;
+
+    
+
+    FUNCTION PobierzIdPoNazwie (vNazwa IN VARCHAR) RETURN NUMBER IS
+
+        vId NUMBER;
+
+    BEGIN
+
+        SELECT ID_ZESP INTO vId FROM zespoly WHERE NAZWA = vNazwa; 
+
+        RETURN vId;
+
+    END PobierzIdPoNazwie;
+
+    
+
+    FUNCTION PobierzNazwePoId (vId IN NUMBER) RETURN VARCHAR IS
+
+        vNazwa VARCHAR(20);
+
+    BEGIN
+
+        SELECT NAZWA INTO vNazwa FROM zespoly WHERE ID_ZESP = vId; 
+
+        RETURN vNazwa;
+
+    END PobierzNazwePoId;
+
+    
+
+    FUNCTION PobierzAdresPoId (vId IN NUMBER) RETURN VARCHAR IS
+
+        vAdres VARCHAR(20);
+
+    BEGIN
+
+        SELECT ADRES INTO vAdres FROM zespoly WHERE ID_ZESP = vId; 
+
+        RETURN vAdres;
+
+    END PobierzAdresPoId;
+
+END IntZespoly;
+
+
+
+--EXEC IntZespoly.DodajZespol('cwier222', 'dsafdfsdf');
+
+--EXEC IntZespoly.UsunZespol(51);
+
+--EXEC IntZespoly.UsunZespolPoNazwie('cwier222');
+
+--EXEC IntZespoly.ZmienZespol(51, 'cwier22233333', 'dsafdfsdf');
+
+--SELECT IntZespoly.PobierzIdPoNazwie('cwier22233333') FROM Dual;
+
+--SELECT IntZespoly.PobierzNazwePoId(51) FROM Dual;
+
+--SELECT IntZespoly.PobierzAdresPoId(51) FROM Dual;
+
+
+
+-- zad 9
+
+
+
+SELECT object_name, status FROM User_Objects WHERE object_type IN ('FUNCTION', 'POCEDURE', 'PACKAGE');
+
+SELECT * FROM User_Source WHERE type IN ('FUNCTION', 'POCEDURE', 'PACKAGE');
+
+
+
+-- zad 10
+
+
+
+DROP FUNCTION Silnia;
+
+DROP FUNCTION SilniaRek;
+
+DROP FUNCTION IleLat;
+
+
+
+-- zad 11
+
+
+
+DROP PACKAGE Konwersja;

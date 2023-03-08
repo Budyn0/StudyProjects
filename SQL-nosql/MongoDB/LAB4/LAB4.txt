@@ -1,0 +1,248 @@
+
+Zadanie 1
+
+db.pracownicy.find()
+
+Zadanie 2
+
+db.zespoly.insert([{"id_zesp":10,"nazwa":"ADMINISTRACJA","adres":"PIOTROWO 3A"},
+{"id_zesp":20,"nazwa":"SYSTEMY ROZPROSZONE","adres":"PIOTROWO 3A"},
+{"id_zesp":30,"nazwa":"SYSTEMY EKSPERCKIE","adres":"STRZELECKA 14"},
+{"id_zesp":40,"nazwa":"ALGORYTMY","adres":"WLODKOWICA 16"},
+{"id_zesp":50,"nazwa":"BADANIA OPERACYJNE","adres":"MIELZYNSKIEGO 30"}])
+
+Zadanie 3
+
+db.pracownicy.find({"etat":"PROFESOR"}, {"nazwisko":0, "_id":0})
+nie pokazuje nazwiska
+db.pracownicy.find({"etat":"PROFESOR"}, {"nazwisko":1, "_id":0})
+pokazuje tylko nazwisko
+
+db.pracownicy.find({"etat":"PROFESOR"}, {"nazwisko":1, "placa_pod":0})
+jest database Error
+
+Zadanie 4
+
+db.pracownicy.find(
+   {
+      $or: [ 
+         { "etat": "asystent" },
+         { "etat": { $ne: "asystent" }, "placa_pod": { $gte: 200, $lte: 500 } } 
+      ]
+   },
+   { "nazwisko": 1, "etat": 1, "placa_pod": 1 }
+)
+
+Zadanie 5
+
+db.pracownicy.find({ "placa_pod": { $gt: 400 } }, 
+   { "etat": 1, "nazwisko": 1, "placa_pod": 1 }
+).sort({ "etat": 1, "placa_pod": -1 })
+
+Zadanie 6
+
+db.pracownicy.find(
+   { "id_zesp": 20 },
+   { "nazwisko": 1, "placa_pod": 1 }
+).sort({ "placa_pod": -1 }).limit(1).skip(1)
+
+Zadanie 7
+
+db.pracownicy.find(
+   {
+      $or: [ { "id_zesp": 20 }, { "id_zesp": 30 } ],
+      "etat": { $ne: "ASYSTENT" },
+      "nazwisko": { $regex: /i$/i }
+   },
+   { "nazwisko": 1, "etat": 1 }
+)
+
+Zadanie 8
+
+db.pracownicy.aggregate([
+   {
+      $sort: { "zarobki": -1 }
+   },
+   {
+      $skip: 2
+   },
+   {
+      $limit: 1
+   },
+   {
+      $project: {
+         "nazwisko": 1,
+         "etat": 1,
+         "rok_zatrudnienia": {$year: "$zatrudniony"},
+         _id:0
+      }
+   }
+])
+
+
+Zadanie 9
+
+db.pracownicy.aggregate([
+   {
+      $group: {
+         _id: "$id_zesp",
+         liczba_pracownikow: { $sum: 1 }
+      }
+   },
+   {
+      $match: {
+         liczba_pracownikow: { $gt: 3 }
+      }
+   },
+   {
+      $project: {
+         _id: 0,
+         nr_zespolu: "$_id",
+         liczba_pracownikow: 1
+      }
+   }
+])
+
+Zadanie 10
+
+db.pracownicy.aggregate([
+    {
+        $match: {
+            $or: [{ "id_zesp": 20 }, { "id_zesp": 30 }]
+        }
+    },
+    {
+        $lookup:
+            {
+                from: "zespoly",
+                localField: "id_zesp",
+                foreignField: "id_zesp",
+                as: "dane_zespolu"
+            }
+    },
+    {
+        $project: {
+            "nazwisko": 1,
+            "adres_zespolu": { "$arrayElemAt": ["$dane_zespolu.adres", 0] },
+            _id:0
+        }
+    }
+])
+
+Zadanie 11
+
+db.pracownicy.aggregate([
+    {
+        $lookup: {
+            from: "zespoly",
+            localField: "id_zesp",
+            foreignField: "id_zesp",
+            as: "zespol_pracownika"
+        }
+    },
+    {
+        $match: {
+            "zespol_pracownika.adres": "STRZELECKA 14"
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            nazwisko: 1,
+            zespol:  {$arrayElemAt:["$zespol_pracownika.nazwa",0]}
+        }
+    }
+])
+
+Zadanie 12
+
+db.pracownicy.aggregate([
+    {
+        $lookup:
+        {
+            from: "zespoly",
+            localField: "id_zesp",
+            foreignField: "id_zesp",
+            as: "zespol_pracownika"
+        }
+    },
+    {
+        $group: {
+            _id: {$arrayElemAt:["$zespol_pracownika.nazwa",0]},
+            liczba_pracownikow: {$sum: 1}
+        }
+    }
+])
+
+Zadanie 13
+
+var pracownicy = db.pracownicy.find();
+
+while (pracownicy.hasNext()) {
+    var prac = pracownicy.next();
+    var zesp = db.zespoly.findOne({"nazwa": prac.id_zesp});
+    db.pracownicy.updateOne(
+        {"_id": prac._id},
+        {$set: {"id_zesp": zesp._id}}
+    );
+}
+
+Zadanie 14
+
+db.produkty.find(
+{ $and: [
+{ "oceny.osoba": { $ne: "Ania" } },
+{ "oceny.osoba": { $ne: "Karol" } }
+] },
+{ nazwa: 1, _id: 0 }
+)
+
+Zadanie 15
+
+db.produkty.aggregate([
+    { $unwind: "$oceny" },
+    {
+        $group: {
+            _id: "$nazwa",
+            avg_ocena: { $avg: "$oceny.ocena" },
+        }
+    },
+    {
+        $sort: { avg_ocena: -1 }
+    },
+    {
+        $limit: 1
+    },
+    {
+        $project: { _id: 0, produkt: "$_id", avg_ocena: "$avg_ocena" }
+    }
+])
+
+Zadanie 16
+
+db.produkty.update(
+{ nazwa: "Kosiarka elektryczna" },
+{ $push: { oceny: { osoba: "Ania", ocena: 4 } } }
+)
+
+Zadanie 17
+
+db.products.find({ 
+    _id: "Kosiarka spalinowa",
+    ratings: {
+        $elemMatch: { 
+            score: 4, 
+            username: "Ania", 
+            $expr: {
+                $eq: [ { $size: { $filter: { input: "$ratings", as: "rating", cond: { $eq: ["$$rating.score", 4] } } } }, 1 ]
+            }
+        }
+    } 
+})
+
+Zadanie 18
+
+db.produkty.updateMany(
+{},
+{ $pull: { oceny: { ocena: { $lte: 3 } } } }
+)

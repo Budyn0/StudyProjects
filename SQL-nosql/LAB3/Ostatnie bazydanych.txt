@@ -1,0 +1,199 @@
+A: Jan Podleski ZAO149195
+B: xxx          ZAOxxxxxx
+C: xxx          ZAOyyyyyy
+
+--zad1
+--A
+SELECT * FROM ZAO149195.pracownicy;
+
+-- zad 2
+--B
+GRANT SELECT ON pracownicy TO ZAOxxxxxx;
+
+--zad3
+--A
+SELECT * FROM ZAO149195.pracownicy;
+
+--zad4
+--A
+GRANT UPDATE (placa_pod, placa_dod) ON pracownicy TO ZAO149195;
+
+-- zad 5
+--B
+UPDATE ZAO148307.pracownicy SET placa_pod = placa_pod * 2;
+UPDATE ZAO148307.pracownicy SET placa_pod = 2000 WHERE nazwisko = 'MORZY';
+UPDATE ZAO148307.pracownicy SET placa_dod = 700;
+
+-- zad 6
+--B
+CREATE SYNONYM pracownicy2 FOR ZAO149195.pracownicy;
+UPDATE pracownicy2 SET placa_dod = 800;
+COMMIT;
+
+-- zad 7
+--B
+SELECT placa_dod FROM pracownicy2;
+
+-- zad 8
+--A i B
+select owner, table_name, grantee, grantor, privilege from user_tab_privs;
+select table_name, grantee, grantor, privilege from user_tab_privs_made;
+select owner, table_name, grantor, privilege from user_tab_privs_recd;
+select owner, table_name, column_name, grantee, grantor, privilege from user_col_privs;
+select table_name, column_name, grantee, grantor, privilege from user_col_privs_made;
+select owner, table_name, column_name, grantor, privilege from user_col_privs_recd;
+
+--zad9
+--A
+REVOKE UPDATE ON pracownicy FROM ZAOxxxxxx;
+
+--B
+UPDATE ZAO149195.pracownicy SET placa_dod = 700;
+UPDATE pracownicy2 SET placa_dod = 800;
+
+--zad10
+--A
+CREATE ROLE ROLA_149195 IDENTIFIED BY 123;
+GRANT SELECT, UPDATE ON pracownicy TO ROLA_149195;
+--B
+CREATE ROLE ROLA_xxxxx;
+GRANT SELECT, UPDATE ON pracownicy TO ROLA_xxxxxx;
+
+--zad11
+--A
+GRANT ROLA_148307 TO ZAOxxxxxx;
+--B
+SELECT * FROM ZAO149195.pracownicy;
+-- zad 12
+--B
+SET ROLE ROLA_149195 IDENTIFIED BY 123;
+select granted_role, admin_option from user_role_privs where username = 'ZAOxxxxxx';
+select role, owner, table_name, column_name, privilege from role_tab_privs;
+
+--zad13
+--A
+REVOKE ROLA_149195 FROM ZAOxxxxxx;
+--B
+SELECT * FROM ZAO149195.pracownicy;
+
+-- zad 14
+--B
+SELECT * FROM ZAO149195.pracownicy;
+--zad15
+--A
+UPDATE ZAOxxxxxx.pracownicy SET placa_dod = 800;
+
+--zad16
+--B
+GRANT ROLA_xxxxxx TO ZAO149195;
+--A
+UPDATE ZAOxxxxxx.pracownicy SET placa_dod = 800;
+
+--zad17
+--A
+UPDATE ZAOxxxxxx.pracownicy SET placa_dod = 800;
+COMMIT;
+
+--zad18
+--B
+REVOKE UPDATE ON pracownicy FROM ROLA_xxxxxx;
+--A
+UPDATE ZAOxxxxxx.pracownicy SET placa_dod = 800;
+
+--zad19
+--A
+DROP ROLE ROLA_149195;
+--B
+DROP ROLE ROLA_xxxxxx;
+
+--zad20
+--A
+GRANT SELECT ON pracownicy TO ZAOxxxxxx WITH GRANT OPTION;
+--B
+GRANT SELECT ON ZAO14195.pracownicy TO ZAOyyyyyy WITH GRANT OPTION;
+--C
+SELECT * FROM ZAO149195.pracownicy;
+
+-- zad 21
+--A, B i C
+select * from user_tab_privs;
+
+--zad22
+--A
+REVOKE SELECT ON pracownicy FROM ZAOyyyyyy;
+--B
+REVOKE SELECT ON pracownicy FROM ZAOxxxxxx;
+--A, B i C
+select * from user_tab_privs;
+
+--zad23
+--A
+CREATE VIEW prac20 AS SELECT nazwisko,placa_pod FROM pracownicy;
+GRANT ALL ON prac20 TO ZAOxxxxxx;
+--B
+UPDATE ZAO149195.prac20 SET placa_pod = 700 WHERE nazwisko = 'MORZY';
+
+--zad24
+--A
+CREATE OR REPLACE FUNCTION funLiczEtaty RETURN INT IS
+v_int INT;
+BEGIN
+    SELECT COUNT(1) INTO v_int FROM Etaty;
+    RETURN v_int;
+END;
+
+GRANT EXECUTE ON funLiczEtaty TO ZAOxxxxxx;
+
+--SELECT funliczetaty FROM DUAL;
+
+-- zad 25
+--B
+SELECT ZAO148307.funLiczEtaty FROM Dual;
+SELECT COUNT(1) FROM ZAO149195.etaty;
+
+--zad26
+--A
+CREATE OR REPLACE FUNCTION funLiczEtaty RETURN INT AUTHID CURRENT_USER IS
+v_int INT;
+BEGIN
+    SELECT COUNT(1) INTO v_int FROM Etaty;
+    RETURN v_int;
+END;
+
+-- zad 27
+--B
+SELECT ZAO149195.funLiczEtaty FROM Dual;
+-- ODP. Nie różni się.
+
+--zad28
+--A
+COMMIT;
+
+-- zad 29
+--B
+SELECT ZAO149195.funLiczEtaty FROM Dual;
+-- ODP. Bo funkcja wykonywała się na tabeli użytkownika B.
+
+-- zad 30
+--B
+CREATE OR REPLACE PROCEDURE procPokazTekst AUTHID CURRENT_USER IS
+BEGIN
+    FOR vRow IN (SELECT tekst FROM test) LOOP
+        DBMS_OUTPUT.PUT_LINE(vRow.tekst);
+    END LOOP;
+END procPokazTekst;
+
+GRANT EXECUTE ON procPokazTekst TO ZAO149195;
+GRANT SELECT ON test TO ZAO149195;
+
+--zad31
+--A
+EXEC ZAOxxxxxx.procPokazTekst;
+--Użytkownik B nie poprzedził nazwy tabeli swoją nazwą użytkownika, funkcja nie może odwołać się do tabeli
+--Użytkownik A może poprosić o modyfikację procedury
+
+--zad32
+--A i B
+CREATE OR REPLACE VIEW info4u AS SELECT * FROM info_dla_znajomych WHERE nazwa = USER;
+GRANT ALL ON info4u TO ZAO149195; -- ZAOxxxxxx
+SELECT * FROM ZAOxxxxxx.info4u; -- ZAOxxxxxx.info4u

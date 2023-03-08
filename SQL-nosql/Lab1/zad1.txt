@@ -1,0 +1,113 @@
+SET SERVEROUTPUT ON;
+
+--zad. 1
+DECLARE
+    vTekst VARCHAR2(50) := 'Witaj świecie!';
+    vLiczba NUMBER(20,3) := 1000.456;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Zmienna vTekst: '|| vTekst);
+    DBMS_OUTPUT.PUT_LINE('Zmienna vLiczba: '|| vLiczba);
+END;
+
+--zad. 2
+DECLARE
+    vTekst VARCHAR2(50) := 'Witaj, świecie!';
+    vLiczba NUMBER(20,3) := 1000.456;
+BEGIN
+    vTekst := vTekst||' Witaj, nowy dniu!';
+    vLiczba := vLiczba + POWER(10,15);
+    DBMS_OUTPUT.PUT_LINE('Zmienna vTekst: '|| vTekst);
+    DBMS_OUTPUT.PUT_LINE('Zmienna vLiczba: '|| vLiczba);
+END;
+
+
+--zad. 3
+DECLARE
+    vVal1 NUMBER(20,7) := 10.2356000;
+    vVal2 NUMBER(20,7) := 0.0000001;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Wynik dodawania ' || TO_CHAR(vVal1, '00d0000000') || ' i ' || TO_CHAR(vVal2, '0d0000000') || ': ' || (vVal1 + vVal2));
+END;
+
+--zad.4
+DECLARE
+    cPI NUMBER(3,2) := 3.14;
+    vVal NUMBER(3,2) := 5;
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Obwod kola o promieniu rownym ' || vVal || ': ' || (2*cPI*vVal));
+    DBMS_OUTPUT.PUT_LINE('Pole kola o promieniu rownym ' || vVal || ': ' || (cPI*vVal*vVal));
+END;
+
+--zad.5
+DECLARE
+    vNazwisko pracownicy.nazwisko%TYPE;
+    vEtat pracownicy.etat%TYPE;
+BEGIN
+    SELECT p.nazwisko, p.etat INTO vNazwisko, vEtat FROM pracownicy p WHERE p.placa_pod = (SELECT MAX(placa_pod) FROM pracownicy);
+   
+    DBMS_OUTPUT.PUT_LINE('Najlepiej zarabia pracownik ' || vNazwisko);
+    DBMS_OUTPUT.PUT_LINE('Pracuje on jako ' || vEtat);
+END;
+
+--zad. 6
+DECLARE
+    TYPE tDane IS RECORD (
+        vNazwisko pracownicy.nazwisko%TYPE,
+        vEtat pracownicy.etat%TYPE);
+    vPracownik tDane;
+BEGIN
+    SELECT p.nazwisko, p.etat INTO vPracownik FROM pracownicy p WHERE p.placa_pod = (SELECT MAX(placa_pod) FROM pracownicy);
+   
+    DBMS_OUTPUT.PUT_LINE('Najlepiej zarabia pracownik ' || vPracownik.vNazwisko);
+    DBMS_OUTPUT.PUT_LINE('Pracuje on jako ' || vPracownik.vEtat);
+END;
+
+
+--zad. 7
+DECLARE
+    SUBTYPE tPieniadze IS NUMBER(20,7);
+    vVal tPieniadze;
+    vNazwisko pracownicy.nazwisko%TYPE;
+BEGIN
+    SELECT p.nazwisko, (p.placa_pod * 12) INTO vNazwisko, vVal FROM pracownicy p WHERE p.nazwisko = 'SLOWINSKI';
+    DBMS_OUTPUT.PUT_LINE('Pracownik ' || vNazwisko || ' zarabia rocznie  ' || vVal);
+END;
+
+--zad. 8
+DECLARE
+BEGIN
+    WHILE TO_CHAR(SYSDATE, 'ss') != '25'
+    LOOP
+        NULL;
+    END LOOP;
+    DBMS_OUTPUT.PUT_LINE('Nadeszla 25 sekunda!');
+END;
+
+--zad. 9
+
+DECLARE
+    vMax NUMBER(20,0) := 10;
+    vCount NUMBER(20,0) := 1;
+    vSum NUMBER(20,0) := 1;
+BEGIN
+    FOR vCount IN 1..vMax
+LOOP
+   vSum := vSum * vCount;
+END LOOP;
+    DBMS_OUTPUT.PUT_LINE('Silnia dla n=' || vMax ||': ' || vSum);
+END;
+
+--zad. 10
+DECLARE
+BEGIN
+FOR vYear IN 2001..2100
+LOOP
+    FOR vMonth IN 1..12
+    LOOP
+        IF TO_CHAR(TO_DATE(vYear||'-'||TO_CHAR(vMonth, '00')||'-13', 'YYYY-MM-DD'), 'D') = '5' THEN
+            DBMS_OUTPUT.PUT_LINE(TO_CHAR(TO_DATE(vYear||'-'||TO_CHAR(vMonth, '00')||'-13', 'YYYY-MM-DD'), 'DD-MM-YYYY'));
+        END IF;
+    END LOOP;
+END LOOP;
+END;
